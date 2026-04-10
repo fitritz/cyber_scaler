@@ -1,0 +1,47 @@
+name: cybersoc-openenv
+
+description: |
+  A cybersecurity incident response environment that simulates SOC operations
+  across brute-force, malware, and data-exfiltration scenarios. Agents are
+  expected to investigate, contain, and escalate incidents with realistic
+  phase-aware actions.
+
+api:
+  reset: GET /reset
+  step: POST /step/{action}
+  state: GET /state
+  health: GET /health
+
+observation_space:
+  task_name: string
+  phase: string
+  alert_type: string
+  failed_logins: int
+  malware_detected: bool
+  network_traffic: int
+  severity: int
+  source_ip_reputation: int
+  host_criticality: int
+  user_risk_score: int
+  exfil_bytes: int
+  containment_status: string
+  evidence_collected: bool
+
+action_space:
+  type: discrete
+  size: 5
+  mapping:
+    0: ignore
+    1: investigate_logs
+    2: block_ip
+    3: isolate_host
+    4: escalate_incident
+
+tasks:
+  - easy
+  - medium
+  - hard
+
+scoring:
+  range: 0.0-1.0
+  method: task_specific_graders_with_partial_credit
