@@ -11,6 +11,7 @@ EPISODES_PER_TASK = 1
 MAX_STEPS = 8
 DEFAULT_SEED = 11
 ENV_NAME = os.getenv("OPENENV_BENCHMARK", "cybersoc-openenv")
+DEFAULT_MODEL = "Qwen/Qwen2.5-72B-Instruct"
 
 
 def parse_action(raw_text):
@@ -52,14 +53,18 @@ def env_or_default(name, default):
 
 def main():
     api_base_url = env_or_default("API_BASE_URL", "https://router.huggingface.co/v1")
-    model_name = env_or_default("MODEL_NAME", "fallback-policy")
-    # Competition requirement explicitly asks for HF_TOKEN, but inference must not crash if it's missing.
-    api_key = os.getenv("HF_TOKEN") or os.getenv("OPENAI_API_KEY")
+    model_name = env_or_default("MODEL_NAME", DEFAULT_MODEL)
+    # Prefer validator-injected API_KEY so calls are visible in platform logs.
+    api_key = (
+        os.getenv("API_KEY")
+        or os.getenv("HF_TOKEN")
+        or os.getenv("OPENAI_API_KEY")
+    )
 
     seed = int(os.getenv("SEED", str(DEFAULT_SEED)))
 
     # Keep baseline runtime bounded even if model endpoint is unavailable.
-    model_available = bool(api_key and api_base_url and model_name and model_name != "fallback-policy")
+    model_available = bool(api_key and api_base_url and model_name)
     client = None
     if model_available:
         client = OpenAI(base_url=api_base_url, api_key=api_key, timeout=2.0, max_retries=0)
