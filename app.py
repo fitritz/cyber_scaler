@@ -1,10 +1,16 @@
 from fastapi import FastAPI
 from fastapi import HTTPException
+from pydantic import BaseModel
 from env.environment import CyberSOCEnv
 
 app = FastAPI()
 
 env = CyberSOCEnv()
+
+
+class ResetRequest(BaseModel):
+    task: str | None = None
+    seed: int | None = None
 
 
 @app.get("/")
@@ -19,6 +25,18 @@ def health():
 
 @app.get("/reset")
 def reset(task: str = None, seed: int = None):
+    try:
+        state = env.reset(task_name=task, seed=seed)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return state.dict()
+
+
+@app.post("/reset")
+def reset_post(payload: ResetRequest | None = None):
+    task = payload.task if payload else None
+    seed = payload.seed if payload else None
     try:
         state = env.reset(task_name=task, seed=seed)
     except ValueError as exc:

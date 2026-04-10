@@ -25,8 +25,9 @@ Environment goals:
 
 OpenEnv API
 
-- `GET /reset` start a new episode
-  - optional query params: `task` (`easy|medium|hard`), `seed` (int)
+- `POST /reset` start a new episode
+  - optional JSON body: `{"task":"easy|medium|hard", "seed": 11}`
+- `GET /reset` compatibility endpoint (query params still supported)
 - `POST /step/{action}` apply action `0..4`
 - `GET /state` fetch latest environment observation
 - `GET /health` liveness check for deployment validation

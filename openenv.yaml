@@ -7,7 +7,7 @@ description: |
   phase-aware actions.
 
 api:
-  reset: GET /reset
+  reset: POST /reset
   step: POST /step/{action}
   state: GET /state
   health: GET /health
