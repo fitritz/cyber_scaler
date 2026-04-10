@@ -13,13 +13,6 @@ DEFAULT_SEED = 11
 ENV_NAME = os.getenv("OPENENV_BENCHMARK", "cybersoc-openenv")
 
 
-def require_env(name):
-    value = os.getenv(name)
-    if not value:
-        raise RuntimeError(f"Missing required environment variable: {name}")
-    return value
-
-
 def parse_action(raw_text):
     if raw_text is None:
         return 1
@@ -50,20 +43,27 @@ def fmt_bool(value):
     return "true" if value else "false"
 
 
+def env_or_default(name, default):
+    value = os.getenv(name)
+    if value is None or value.strip() == "":
+        return default
+    return value
+
+
 def main():
-    api_base_url = require_env("API_BASE_URL")
-    model_name = require_env("MODEL_NAME")
-    # Competition requirement explicitly asks for HF_TOKEN.
+    api_base_url = env_or_default("API_BASE_URL", "https://router.huggingface.co/v1")
+    model_name = env_or_default("MODEL_NAME", "fallback-policy")
+    # Competition requirement explicitly asks for HF_TOKEN, but inference must not crash if it's missing.
     api_key = os.getenv("HF_TOKEN") or os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        raise RuntimeError("Missing API key. Set HF_TOKEN (preferred) or OPENAI_API_KEY.")
 
     seed = int(os.getenv("SEED", str(DEFAULT_SEED)))
 
     # Keep baseline runtime bounded even if model endpoint is unavailable.
-    client = OpenAI(base_url=api_base_url, api_key=api_key, timeout=2.0, max_retries=0)
+    model_available = bool(api_key and api_base_url and model_name and model_name != "fallback-policy")
+    client = None
+    if model_available:
+        client = OpenAI(base_url=api_base_url, api_key=api_key, timeout=2.0, max_retries=0)
     env = CyberSOCEnv(seed=seed)
-    model_available = True
 
     for task_name in TASK_ORDER:
         for episode in range(EPISODES_PER_TASK):
